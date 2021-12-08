@@ -82,7 +82,9 @@ diamonds_treat <- diamonds_treat%>%
 
 xgb_split= sample.split(diamonds_treat$cut_lev_x_Ideal, SplitRatio = 0.8)
 xgb_train<- subset(diamonds_treat, split == TRUE)
+xgb_train_2<- subset(xgb_train, select = -price)
 xgb_test <- subset(diamonds_treat, split == FALSE)
+xgb_test_2<- subset(xgb_test, select = -price)
 colnames(xgb_train)
 
 xgb_control <- trainControl(method='cv', number=2, search = 'random')
@@ -96,26 +98,26 @@ toc()
 print(xgb_cv_model)
 #use the random search results to build the xgboost model 
 tic()
-xgb<-xgboost(data=as.matrix(xgb_train),
-             label = train$price,
-             objective = 'reg:linear',
-             nrounds = 937,
-             max_depth =7,
-             eta=0.075,
-             gamma = 1.46, 
-             colsample_bytree = 0.65,
-             min_child_weight = 15, 
-             subsample = 0.68,
+xgb<-xgboost(data=as.matrix(xgb_train_2),
+             label = xgb_train$price,
+             objective = 'reg:squarederror',
+             nrounds = 865,
+             max_depth =6,
+             eta=0.0347,
+             gamma = 6.02, 
+             colsample_bytree = 0.56,
+             min_child_weight = 10, 
+             subsample = 0.73,
              verbose = 0)
 toc()
 summary(xgb)
-xgb_predictions <- predict(xgb, newdata= as.matrix(xgb_test))
-xgb_residual <- test$price - xgb_predictions
+xgb_predictions <- predict(xgb, newdata= as.matrix(xgb_test_2))
+xgb_residual <- xgb_test$price - xgb_predictions
 xgb_rmse <- sqrt(mean(xgb_residual^2))
 print(xgb_rmse)
 
-xgb_SSE = sum((test$price-xgb_predictions)^2)
-xgb_SST = sum((test$price- mean(train$price))^2)
+xgb_SSE = sum((xgb_test$price-xgb_predictions)^2)
+xgb_SST = sum((xgb_test$price- mean(xgb_train$price))^2)
 xgb_r2<-1 - xgb_SSE/xgb_SST
 print(xgb_r2)
 
