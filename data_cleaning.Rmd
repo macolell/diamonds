@@ -1,0 +1,180 @@
+---
+title: "516 Final Project: Data Cleaning"
+author: "Mikhael Rout"
+date: "12/7/2021"
+output: html_document
+---
+
+## Packages
+```{r}
+library(caret)
+library(matrixStats)
+```
+
+## Set Up
+```{r}
+rm(list = ls())
+setwd("C:/Users/User/Documents/516/Final Project")
+diamonds.data = read.csv("diamonds.csv")
+colnames(diamonds.data)
+```
+
+## Normalize columns
+```{r}
+## Normalize numerical columns
+preprocess = preProcess(diamonds.data)
+norm.diamonds =  predict(preprocess, diamonds.data)
+norm.diamonds$X = NULL
+
+## Check mean and sd
+colMeans(norm.diamonds[,5:10]) # Column Means
+colSds(as.matrix(norm.diamonds[,5:10][sapply(norm.diamonds[,5:10], is.numeric)])) # Column SDs
+```
+
+## Qualitative Terms
+```{r}
+unique(diamonds.data$cut)
+unique(diamonds.data$color)
+unique(diamonds.data$clarity)
+```
+
+## Create Cut Columns
+```{r}
+# Initialize 0 columns
+norm.diamonds$cut.ideal = 0
+norm.diamonds$cut.premium = 0
+norm.diamonds$cut.good = 0
+norm.diamonds$cut.verygood = 0
+norm.diamonds$cut.fair = 0
+
+# Change value to 1 on match
+for (x in 1:53940) {
+  if (norm.diamonds$cut[x] == "Ideal") {
+    norm.diamonds$cut.ideal[x] = 1
+  } else if (norm.diamonds$cut[x] == "Premium") {
+    norm.diamonds$cut.premium[x] = 1
+  } else if (norm.diamonds$cut[x] == "Good") {
+    norm.diamonds$cut.good[x] = 1
+  } else if (norm.diamonds$cut[x] == "Very Good") {
+    norm.diamonds$cut.verygood[x] = 1
+  } else {
+    norm.diamonds$cut.fair[x] = 1
+  }
+}
+```
+
+## Create Color Columns
+```{r}
+# Initialize 0 columns
+norm.diamonds$color.D = 0
+norm.diamonds$color.E = 0
+norm.diamonds$color.F = 0
+norm.diamonds$color.G = 0
+norm.diamonds$color.H = 0
+norm.diamonds$color.I = 0
+norm.diamonds$color.J = 0
+
+# Change value to 1 on match
+for (x in 1:53940) {
+  if (norm.diamonds$color[x] == "D") {
+    norm.diamonds$color.D[x] = 1
+  } else if (norm.diamonds$color[x] == "E") {
+    norm.diamonds$color.E[x] = 1
+  } else if (norm.diamonds$color[x] == "F") {
+    norm.diamonds$color.F[x] = 1
+  } else if (norm.diamonds$color[x] == "G") {
+    norm.diamonds$color.G[x] = 1
+  } else if (norm.diamonds$color[x] == "H") {
+    norm.diamonds$color.H[x] = 1
+  } else if (norm.diamonds$color[x] == "I") {
+    norm.diamonds$color.I[x] = 1
+  } else {
+    norm.diamonds$color.J[x] = 1
+  }
+}
+```
+
+## Create Clarity Columns
+```{r}
+# Initialize 0 columns
+norm.diamonds$clarity.SI1 = 0
+norm.diamonds$clarity.SI2 = 0
+norm.diamonds$clarity.VS1 = 0
+norm.diamonds$clarity.VS2 = 0
+norm.diamonds$clarity.VVS1 = 0
+norm.diamonds$clarity.VVS2 = 0
+norm.diamonds$clarity.I1 = 0
+norm.diamonds$clarity.IF = 0
+
+# Change value to 1 on match
+for (x in 1:53940) {
+  if (norm.diamonds$clarity[x] == "SI1") {
+    norm.diamonds$clarity.SI1[x] = 1
+  } else if (norm.diamonds$clarity[x] == "SI2") {
+    norm.diamonds$clarity.SI2[x] = 1
+  } else if (norm.diamonds$clarity[x] == "VS1") {
+    norm.diamonds$clarity.VS1[x] = 1
+  } else if (norm.diamonds$clarity[x] == "VS2") {
+    norm.diamonds$clarity.VS2[x] = 1
+  } else if (norm.diamonds$clarity[x] == "VVS1") {
+    norm.diamonds$clarity.VVS1[x] = 1
+  } else if (norm.diamonds$clarity[x] == "VVS2") {
+    norm.diamonds$clarity.VVS2[x] = 1
+  } else if (norm.diamonds$clarity[x] == "I1") {
+    norm.diamonds$clarity.I1[x] = 1
+  } else {
+    norm.diamonds$clarity.IF[x] = 1
+  }
+}
+```
+
+## Drop Original Qualitative Columns
+```{r}
+norm.diamonds$cut = NULL
+norm.diamonds$color = NULL
+norm.diamonds$clarity = NULL
+```
+
+## Export Normalized Table to CSV File
+```{r}
+write.csv(norm.diamonds, "norm_diamonds.csv", row.names = FALSE)
+```
+
+## Update Modified Version of Original Data Set
+```{r}
+diamonds.data$cut.ideal = norm.diamonds$cut.ideal
+diamonds.data$cut.premium = norm.diamonds$cut.premium
+diamonds.data$cut.good = norm.diamonds$cut.good
+diamonds.data$cut.verygood = norm.diamonds$cut.verygood
+diamonds.data$cut.fair = norm.diamonds$cut.fair
+
+diamonds.data$color.D = norm.diamonds$color.D
+diamonds.data$color.E = norm.diamonds$color.E
+diamonds.data$color.F = norm.diamonds$color.F
+diamonds.data$color.G = norm.diamonds$color.G
+diamonds.data$color.H = norm.diamonds$color.H
+diamonds.data$color.I = norm.diamonds$color.I
+diamonds.data$color.J = norm.diamonds$color.J
+
+diamonds.data$clarity.SI1 = norm.diamonds$clarity.SI1
+diamonds.data$clarity.SI2 = norm.diamonds$clarity.SI2
+diamonds.data$clarity.VS1 = norm.diamonds$clarity.VS1
+diamonds.data$clarity.VS2 = norm.diamonds$clarity.VS2
+diamonds.data$clarity.VVS1 = norm.diamonds$clarity.VVS1
+diamonds.data$clarity.VVS2 = norm.diamonds$clarity.VVS2
+diamonds.data$clarity.I1 = norm.diamonds$clarity.I1
+diamonds.data$clarity.IF = norm.diamonds$clarity.IF
+```
+
+## Remove row names & qualitative columns 
+```{r}
+diamonds.data$X = NULL
+diamonds.data$cut = NULL
+diamonds.data$color = NULL
+diamonds.data$clarity = NULL
+```
+
+## Export
+```{r}
+write.csv(diamonds.data, "mod_diamonds.csv", row.names = FALSE)
+```

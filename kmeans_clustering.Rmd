@@ -1,0 +1,100 @@
+---
+title: "516 Final Project: K-Means Clustering"
+author: "Mikhael Rout"
+date: "12/7/2021"
+output: html_document
+---
+
+## Packages
+```{r}
+library(caret)
+library(fpc)
+library(ggplot2)
+library(tictoc)
+```
+
+## Set Up
+```{r}
+rm(list = ls())
+setwd("C:/Users/User/Documents/516/Final Project")
+mod.diamonds = read.csv("mod_diamonds.csv")
+norm.diamonds = read.csv("norm_diamonds.csv")
+
+norm.diamonds$X = NULL
+mod.diamonds$X = NULL
+
+mod.diamonds = mod.diamonds[,c(1,2,3,5,6,7,4,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)]
+norm.diamonds = norm.diamonds[,c(1,2,3,5,6,7,4,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27)]
+
+colnames(mod.diamonds)
+```
+
+## k-means Clustering
+```{r}
+k = c(4, 5, 6, 7, 8, 9, 10)
+nam = "cluster_analysis_" # csv file name prefix
+for (i in k) {
+  set.seed(1234) # for reproducibility 
+  
+  # Set number of clusters to i
+  tic()
+  kmeans.clustering = kmeans(norm.diamonds, centers = i) 
+  toc()
+  
+  # lapply() used with tapply() to use tapply() across all relevant columns
+  # since tapply() only applies to 1 row at a time.
+  # Then use data.frame() to turn table into data frame 
+  df = data.frame(lapply(mod.diamonds[,7:27], 
+                         function(x) tapply(x, kmeans.clustering$cluster, mean)))
+  
+  # Add cluster sizes to data frame at the front
+  df = cbind(data.frame(table(kmeans.clustering$cluster)), df)
+  
+  # Remove unnecessary row number column
+  df$Var1 = NULL
+  
+  # Rename Freq column to cluster.size
+  colnames(df)[colnames(df) == 'Freq'] = 'cluster.size'
+  
+  # Concatenate strings to create filename
+  name = paste(nam, i, ".csv", sep="") 
+  
+  # Write data frame to .csv file
+  write.csv(df, name, row.names = FALSE)
+}
+df = NULL
+```
+
+## Import Cluster Groups
+```{r}
+df4 = read.csv("cluster_analysis_4.csv")
+df5 = read.csv("cluster_analysis_5.csv")
+df6 = read.csv("cluster_analysis_6.csv")
+df7 = read.csv("cluster_analysis_7.csv")
+df8 = read.csv("cluster_analysis_8.csv")
+df9 = read.csv("cluster_analysis_9.csv")
+df10 = read.csv("cluster_analysis_10.csv")
+```
+
+## Pick Cluster Size (8)
+```{r}
+tic()
+set.seed(1234)
+kmeans.clustering = kmeans(norm.diamonds, centers = 8)
+toc()
+mod.diamonds$cluster = kmeans.clustering$cluster
+mod.diamonds$cluster = as.character(mod.diamonds$cluster)
+```
+
+## Graph
+```{r}
+g = ggplot(mod.diamonds, aes(x=price, y=carat, color=cluster)) + geom_point() +
+           xlab("Price") + ylab("Carat") + 
+           ggtitle("Clustered View: Price vs. Carat") +
+           theme(plot.title = element_text(hjust = 0.5)) + 
+           labs(color = 'Cluster No.')
+
+jpeg('Clustered View.jpg', units="in", width=7, height=7, res=700)
+g
+dev.off()
+```
